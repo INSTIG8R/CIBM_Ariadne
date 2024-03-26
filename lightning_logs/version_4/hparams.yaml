@@ -1,0 +1,25 @@
+args: !!python/object/new:utils.config.CfgNode
+  dictitems:
+    bert_type: microsoft/BiomedVLP-CXR-BERT-specialized
+    device: 1
+    image_size:
+    - 224
+    - 224
+    lr: 0.0003
+    max_epochs: 100
+    min_epochs: 20
+    model_save_filename: medseg
+    model_save_path: ./save_model
+    patience: 20
+    project_dim: 768
+    test_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test
+      Set/synapse_test_rocoU.csv
+    test_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test
+      Set
+    train_batch_size: 8
+    train_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train
+      Set/synapse_train_rocoU.csv
+    train_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train
+      Set
+    valid_batch_size: 8
+    vision_type: facebook/convnext-tiny-224

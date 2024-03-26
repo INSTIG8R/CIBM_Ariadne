@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # load model
     model = LanGuideMedSegWrapper(args)
 
-    checkpoint = torch.load('./save_model/medseg.ckpt',map_location='cpu')["state_dict"]
+    checkpoint = torch.load('./save_model/medseg-v1.ckpt',map_location='cpu')["state_dict"]
     model.load_state_dict(checkpoint,strict=True)
 
     # dataloader

@@ -29,7 +29,7 @@ class QaTa(Dataset):
         image_list = list(self.data['Image'])
         caption_list = list(self.data['Description'])
 
-        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Test Set/Images'
+        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test Set/Images'
 
         self.image_list, self.caption_list = clean_lists(image_list, caption_list, folder_path)
 
@@ -64,7 +64,7 @@ class QaTa(Dataset):
         caption = self.caption_list[idx]
 
         token_output = self.tokenizer.encode_plus(caption, padding='max_length',
-                                                        max_length=24, 
+                                                        max_length=50, 
                                                         truncation=True,
                                                         return_attention_mask=True,
                                                         return_tensors='pt')
