@@ -18,7 +18,7 @@ args: !!python/object/new:utils.config.CfgNode
       Set
     train_batch_size: 8
     train_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train
-      Set/synapse_train_rocoU.csv
+      Set/synapse_npz_200.csv
     train_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train
       Set
     valid_batch_size: 8

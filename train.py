@@ -82,4 +82,3 @@ if __name__ == '__main__':
     print('start training')
     trainer.fit(model,dl_train,dl_valid)
     print('done training')
-

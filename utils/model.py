@@ -69,7 +69,7 @@ class LanGuideMedSeg(nn.Module):
         self.decoder8 = GuideDecoder(feature_dim[1],feature_dim[2],self.spatial_dim[1],12)
         self.decoder4 = GuideDecoder(feature_dim[2],feature_dim[3],self.spatial_dim[2],9)
         self.decoder1 = SubpixelUpsample(2,feature_dim[3],24,4)
-        self.out = UnetOutBlock(2, in_channels=24, out_channels=1)
+        self.out = UnetOutBlock(2, in_channels=24, out_channels=9)
 
     def forward(self, data):
 
@@ -93,7 +93,12 @@ class LanGuideMedSeg(nn.Module):
         os4 = rearrange(os4, 'B (H W) C -> B C H W',H=self.spatial_dim[-1],W=self.spatial_dim[-1])
         os1 = self.decoder1(os4)
 
-        out = self.out(os1).sigmoid()
+        out = self.out(os1)
+        
+        # out = out.sigmoid()
+
+        # out = torch.nn.functional.softmax(out, dim=1)
+        # out = torch.argmax(out, dim=1)
 
         return out
     

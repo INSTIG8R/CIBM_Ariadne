@@ -21,7 +21,7 @@ class LanGuideMedSegWrapper(pl.LightningModule):
         self.lr = args.lr
         self.history = {}
         
-        self.loss_fn = DiceCELoss()
+        self.loss_fn = DiceCELoss(include_background=False,softmax=True)
 
         metrics_dict = {"acc":Accuracy(task='binary'),"dice":Dice(),"MIoU":BinaryJaccardIndex()}
         self.train_metrics = nn.ModuleDict(metrics_dict)
@@ -46,7 +46,7 @@ class LanGuideMedSegWrapper(pl.LightningModule):
         x, y = batch
         preds = self(x)
         loss = self.loss_fn(preds,y)
-        return {'loss': loss, 'preds': preds.detach(), 'y': y.detach()}    
+        return {'loss': loss, 'preds': preds.detach(), 'y': y.detach()}
     
     def training_step(self, batch, batch_idx):
         return self.shared_step(batch,batch_idx)
@@ -112,8 +112,8 @@ class LanGuideMedSegWrapper(pl.LightningModule):
         
         #log when reach best score
         ckpt_cb = self.trainer.checkpoint_callback
-        monitor = ckpt_cb.monitor 
-        mode = ckpt_cb.mode 
+        monitor = ckpt_cb.monitor
+        mode = ckpt_cb.mode
         arr_scores = self.get_history()[monitor]
         best_score_idx = np.argmax(arr_scores) if mode=="max" else np.argmin(arr_scores)
         if best_score_idx==len(arr_scores)-1:   
