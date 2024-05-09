@@ -13,7 +13,7 @@ args: !!python/object/new:utils.config.CfgNode
     patience: 20
     project_dim: 768
     test_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test
-      Set/synapse_test_rocoU.csv
+      Set/synapse_h5_200.csv
     test_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test
       Set
     train_batch_size: 8

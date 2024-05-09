@@ -36,7 +36,9 @@ class QaTa(Dataset):
         image_list = list(self.data['Image'])
         caption_list = list(self.data['Description'])
 
-        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set/train_npz'
+        # folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set/train_npz'
+
+        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test Set/synapse_npz_from_h5' #For test
 
         self.image_list, self.caption_list = clean_lists(image_list, caption_list, folder_path)
 
@@ -72,7 +74,7 @@ class QaTa(Dataset):
         image_list = self.image_list
         # data_path = os.path.join(self.root_path, image_list[idx])
 
-        npz_file = os.path.join(self.root_path,'train_npz',image_list[idx])
+        npz_file = os.path.join(self.root_path,'synapse_npz_from_h5',image_list[idx])
         npz_data = np.load(npz_file)
         
         image = npz_data['image']
@@ -123,30 +125,30 @@ class QaTa(Dataset):
 
         return ([image, text], gt)
 
-    def transform(self,image_size=[224,224]):
+    # def transform(self,image_size=[224,224]):
 
-        if self.mode == 'train':  # for training mode
-            trans = Compose([
-                LoadImaged(["image","gt"], reader='PILReader'),
-                EnsureChannelFirstd(["image","gt"]),
-                RandZoomd(['image','gt'],min_zoom=0.95,max_zoom=1.2,mode=["bicubic","nearest"],prob=0.1),
-                Resized(["image"],spatial_size=image_size,mode='bicubic'),
-                Resized(["gt"],spatial_size=image_size,mode='nearest'),
-                NormalizeIntensityd(['image'], channel_wise=True),
-                ToTensord(["image","gt","token","mask"]),
-            ])
+    #     if self.mode == 'train':  # for training mode
+    #         trans = Compose([
+    #             LoadImaged(["image","gt"], reader='PILReader'),
+    #             EnsureChannelFirstd(["image","gt"]),
+    #             RandZoomd(['image','gt'],min_zoom=0.95,max_zoom=1.2,mode=["bicubic","nearest"],prob=0.1),
+    #             Resized(["image"],spatial_size=image_size,mode='bicubic'),
+    #             Resized(["gt"],spatial_size=image_size,mode='nearest'),
+    #             NormalizeIntensityd(['image'], channel_wise=True),
+    #             ToTensord(["image","gt","token","mask"]),
+    #         ])
         
-        else:  # for valid and test mode: remove random zoom
-            trans = Compose([
-                LoadImaged(["image","gt"], reader='PILReader'),
-                EnsureChannelFirstd(["image","gt"]),
-                Resized(["image"],spatial_size=image_size,mode='bicubic'),
-                Resized(["gt"],spatial_size=image_size,mode='nearest'),
-                NormalizeIntensityd(['image'], channel_wise=True),
-                ToTensord(["image","gt","token","mask"]),
+    #     else:  # for valid and test mode: remove random zoom
+    #         trans = Compose([
+    #             LoadImaged(["image","gt"], reader='PILReader'),
+    #             EnsureChannelFirstd(["image","gt"]),
+    #             Resized(["image"],spatial_size=image_size,mode='bicubic'),
+    #             Resized(["gt"],spatial_size=image_size,mode='nearest'),
+    #             NormalizeIntensityd(['image'], channel_wise=True),
+    #             ToTensord(["image","gt","token","mask"]),
 
-            ])
+    #         ])
 
-        return trans
+    #     return trans
 
 
