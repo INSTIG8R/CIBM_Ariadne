@@ -113,15 +113,15 @@ class QaTa(Dataset):
             image = zoom(image, (self.output_size[0] / x, self.output_size[1] / y), order=3)  # why not 3?
             gt = zoom(gt, (self.output_size[0] / x, self.output_size[1] / y), order=0)
 
-        gt_reshaped = np.zeros((9, gt.shape[0], gt.shape[1]), dtype=gt.dtype)
+        # gt_reshaped = np.zeros((9, gt.shape[0], gt.shape[1]), dtype=gt.dtype)
 
-        for i in range(8):
-            gt_reshaped[i] = (gt == i).astype(gt.dtype)
+        # for i in range(8):
+        #     gt_reshaped[i] = (gt == i).astype(gt.dtype)
 
-        gt = torch.from_numpy(gt_reshaped.astype(np.int32))
+        # gt = torch.from_numpy(gt_reshaped.astype(np.int32))
 
         image = torch.from_numpy(image.astype(np.float32)).unsqueeze(0)
-        # gt = torch.from_numpy(gt.astype(np.float32))
+        gt = torch.from_numpy(gt.astype(np.int32)).unsqueeze(0)
 
         return ([image, text], gt)
 

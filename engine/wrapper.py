@@ -21,9 +21,35 @@ class LanGuideMedSegWrapper(pl.LightningModule):
         self.lr = args.lr
         self.history = {}
         
-        self.loss_fn = DiceCELoss(include_background=False,softmax=True)
+        # self.loss_fn = DiceCELoss(include_background=False,softmax=True,to_onehot_y=True)  #without bg
 
-        metrics_dict = {"acc":Accuracy(task='binary'),"dice":Dice(),"MIoU":BinaryJaccardIndex()}
+        self.loss_fn = DiceCELoss(include_background=True,softmax=True,to_onehot_y=True)        
+
+        # metrics_dict = {"acc":Accuracy(task='binary'),"dice":Dice(),"MIoU":BinaryJaccardIndex()}
+        # metrics_dict = {"dice_micro":Dice(average='micro',ignore_index=0),"dice_macro":Dice(average='macro',num_classes=9,ignore_index=0),
+        #                 "dice_class0":Dice(average='none',num_classes=9,ignore_index=0)[0],
+        #                 "dice_class1":Dice(average='none',num_classes=9,ignore_index=0)[1],
+        #                 "dice_class2":Dice(average='none',num_classes=9,ignore_index=0)[2],
+        #                 "dice_class3":Dice(average='none',num_classes=9,ignore_index=0)[3],
+        #                 "dice_class4":Dice(average='none',num_classes=9,ignore_index=0)[4],
+        #                 "dice_class5":Dice(average='none',num_classes=9,ignore_index=0)[5],
+        #                 "dice_class6":Dice(average='none',num_classes=9,ignore_index=0)[6],
+        #                 "dice_class7":Dice(average='none',num_classes=9,ignore_index=0)[7],
+        #                 "dice_class8":Dice(average='none',num_classes=9,ignore_index=0)[8]
+        #                 }  #Without bg
+
+        metrics_dict = {"dice_micro":Dice(average='micro'),"dice_macro":Dice(average='macro',num_classes=9),
+                        "dice_class0":Dice(average='none',num_classes=9)[0],
+                        "dice_class1":Dice(average='none',num_classes=9)[1],
+                        "dice_class2":Dice(average='none',num_classes=9)[2],
+                        "dice_class3":Dice(average='none',num_classes=9)[3],
+                        "dice_class4":Dice(average='none',num_classes=9)[4],
+                        "dice_class5":Dice(average='none',num_classes=9)[5],
+                        "dice_class6":Dice(average='none',num_classes=9)[6],
+                        "dice_class7":Dice(average='none',num_classes=9)[7],
+                        "dice_class8":Dice(average='none',num_classes=9)[8]
+                        }  #Without bg
+
         self.train_metrics = nn.ModuleDict(metrics_dict)
         self.val_metrics = deepcopy(self.train_metrics)
         self.test_metrics = deepcopy(self.train_metrics)
