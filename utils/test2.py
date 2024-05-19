@@ -1,8 +1,7 @@
-from torch import tensor
-from torchmetrics.classification import Dice
-preds  = tensor([8, 9, 224, 224])
-target = tensor([8, 1, 224, 224])
-dice = Dice(average='micro')
-dice(preds, target)
+import torch
+import torch.nn.functional as F
 
-print(dice)
+x = torch.rand(8,1,224,224)
+F.one_hot(x.long())
+
+print(x.shape)

@@ -69,7 +69,7 @@ class LanGuideMedSeg(nn.Module):
         self.decoder8 = GuideDecoder(feature_dim[1],feature_dim[2],self.spatial_dim[1],12)
         self.decoder4 = GuideDecoder(feature_dim[2],feature_dim[3],self.spatial_dim[2],9)
         self.decoder1 = SubpixelUpsample(2,feature_dim[3],24,4)
-        self.out = UnetOutBlock(2, in_channels=24, out_channels=9)
+        self.out = UnetOutBlock(2, in_channels=24, out_channels=4)
 
     def forward(self, data):
 

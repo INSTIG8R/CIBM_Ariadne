@@ -36,9 +36,9 @@ class QaTa(Dataset):
         image_list = list(self.data['Image'])
         caption_list = list(self.data['Description'])
 
-        # folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set/train_npz'
+        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/ACDC/Ariadne/Train Set/train_npz'
 
-        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test Set/synapse_npz_from_h5' #For test
+        # folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/ACDC/Ariadne/Test Set/test_npz' #For test
 
         self.image_list, self.caption_list = clean_lists(image_list, caption_list, folder_path)
 
@@ -74,11 +74,23 @@ class QaTa(Dataset):
         image_list = self.image_list
         # data_path = os.path.join(self.root_path, image_list[idx])
 
-        npz_file = os.path.join(self.root_path,'synapse_npz_from_h5',image_list[idx])
+        npz_file = os.path.join(self.root_path,'train_npz',image_list[idx])
         npz_data = np.load(npz_file)
         
         image = npz_data['image']
         gt = npz_data['label']
+
+        # tolerance = 1e-5 
+
+        # replace_value =  gt== 1.0
+        # gt = np.where(replace_value, 3.0, gt)
+
+        # replace_value = np.abs(gt - 0.33333) <= tolerance
+        # gt = np.where(replace_value, 1.0, gt)
+
+        # replace_value = np.abs(gt - 0.66666) <= tolerance
+        # gt = np.where(replace_value, 2.0, gt)
+
 
         unique_values = np.unique(gt)
         num_classes = len(unique_values)
