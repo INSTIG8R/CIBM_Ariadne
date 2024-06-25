@@ -87,6 +87,7 @@ class LanGuideMedSegWrapper(pl.LightningModule):
             return self(batch)
         
     def shared_step_end(self,outputs,stage):
+        outputs['preds'] =  outputs['preds'].sigmoid()
         metrics = self.train_metrics if stage=="train" else (
             self.val_metrics if stage=="val" else self.test_metrics)
         for name in metrics:
