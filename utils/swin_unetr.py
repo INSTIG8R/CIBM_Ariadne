@@ -23,6 +23,7 @@ from torch.nn import LayerNorm
 from typing_extensions import Final
 
 from einops import rearrange, repeat
+from transformers import AutoTokenizer, AutoModel
 
 from monai.networks.blocks import MLPBlock as Mlp
 from monai.networks.blocks import PatchEmbed, UnetOutBlock, UnetrBasicBlock, UnetrUpBlock
@@ -45,6 +46,22 @@ __all__ = [
     "SwinTransformer",
 ]
 
+class VisionModel1(nn.Module):
+
+    def __init__(self, vision_type1, project_dim):
+        super(VisionModel1, self).__init__()
+
+        self.model = AutoModel.from_pretrained(vision_type1,output_hidden_states=True)   
+        self.project_head = nn.Linear(768, project_dim)
+        self.spatial_dim = 768
+
+    def forward(self, x):
+
+        output = self.model(x, output_hidden_states=True)
+        embeds = output['pooler_output'].squeeze()
+        project = self.project_head(embeds)
+
+        return {"feature":output['hidden_states'], "project":project}
 
 class SwinUNETR(nn.Module):
     """
@@ -64,6 +81,8 @@ class SwinUNETR(nn.Module):
     )
     def __init__(
         self,
+        vision_type1: str,
+        project_dim: int,
         img_size: Sequence[int] | int,
         in_channels: int,
         out_channels: int,
@@ -141,24 +160,26 @@ class SwinUNETR(nn.Module):
 
         self.normalize = normalize
 
-        self.swinViT = SwinTransformer(
-            in_chans=in_channels,
-            embed_dim=feature_size,
-            window_size=window_size,
-            patch_size=patch_sizes,
-            depths=depths,
-            num_heads=num_heads,
-            mlp_ratio=4.0,
-            qkv_bias=True,
-            drop_rate=drop_rate,
-            attn_drop_rate=attn_drop_rate,
-            drop_path_rate=dropout_path_rate,
-            norm_layer=nn.LayerNorm,
-            use_checkpoint=use_checkpoint,
-            spatial_dims=spatial_dims,
-            downsample=look_up_option(downsample, MERGING_MODE) if isinstance(downsample, str) else downsample,
-            use_v2=use_v2,
-        )
+        self.swinViT = VisionModel1(vision_type1, project_dim)
+
+        # self.swinViT = SwinTransformer(
+        #     in_chans=in_channels,
+        #     embed_dim=feature_size,
+        #     window_size=window_size,
+        #     patch_size=patch_sizes,
+        #     depths=depths,
+        #     num_heads=num_heads,
+        #     mlp_ratio=4.0,
+        #     qkv_bias=True,
+        #     drop_rate=drop_rate,
+        #     attn_drop_rate=attn_drop_rate,
+        #     drop_path_rate=dropout_path_rate,
+        #     norm_layer=nn.LayerNorm,
+        #     use_checkpoint=use_checkpoint,
+        #     spatial_dims=spatial_dims,
+        #     downsample=look_up_option(downsample, MERGING_MODE) if isinstance(downsample, str) else downsample,
+        #     use_v2=use_v2,
+        # )
 
         self.encoder1 = UnetrBasicBlock(
             spatial_dims=spatial_dims,
@@ -182,8 +203,8 @@ class SwinUNETR(nn.Module):
 
         self.encoder3 = UnetrBasicBlock(
             spatial_dims=spatial_dims,
-            in_channels=2 * feature_size,
-            out_channels=2 * feature_size,
+            in_channels=feature_size,
+            out_channels=feature_size,
             kernel_size=3,
             stride=1,
             norm_name=norm_name,
@@ -192,18 +213,28 @@ class SwinUNETR(nn.Module):
 
         self.encoder4 = UnetrBasicBlock(
             spatial_dims=spatial_dims,
-            in_channels=4 * feature_size,
-            out_channels=4 * feature_size,
+            in_channels=2 * feature_size,
+            out_channels=2 * feature_size,
             kernel_size=3,
             stride=1,
             norm_name=norm_name,
             res_block=True,
         )
 
+        # self.encoder5 = UnetrBasicBlock(
+        #     spatial_dims=spatial_dims,
+        #     in_channels=4 * feature_size,
+        #     out_channels=4 * feature_size,
+        #     kernel_size=3,
+        #     stride=1,
+        #     norm_name=norm_name,
+        #     res_block=True,
+        # )
+
         self.encoder10 = UnetrBasicBlock(
             spatial_dims=spatial_dims,
-            in_channels=16 * feature_size,
-            out_channels=16 * feature_size,
+            in_channels=8 * feature_size,
+            out_channels=8 * feature_size,
             kernel_size=3,
             stride=1,
             norm_name=norm_name,
@@ -212,8 +243,8 @@ class SwinUNETR(nn.Module):
 
         self.decoder5 = UnetrUpBlock(
             spatial_dims=spatial_dims,
-            in_channels=16 * feature_size,
-            out_channels=8 * feature_size,
+            in_channels=8 * feature_size,
+            out_channels=4 * feature_size,
             kernel_size=3,
             upsample_kernel_size=2,
             norm_name=norm_name,
@@ -222,8 +253,8 @@ class SwinUNETR(nn.Module):
 
         self.decoder4 = UnetrUpBlock(
             spatial_dims=spatial_dims,
-            in_channels=feature_size * 8,
-            out_channels=feature_size * 4,
+            in_channels=feature_size * 4,
+            out_channels=feature_size * 2,
             kernel_size=3,
             upsample_kernel_size=2,
             norm_name=norm_name,
@@ -232,8 +263,8 @@ class SwinUNETR(nn.Module):
 
         self.decoder3 = UnetrUpBlock(
             spatial_dims=spatial_dims,
-            in_channels=feature_size * 4,
-            out_channels=feature_size * 2,
+            in_channels=feature_size * 2,
+            out_channels=feature_size,
             kernel_size=3,
             upsample_kernel_size=2,
             norm_name=norm_name,
@@ -241,10 +272,10 @@ class SwinUNETR(nn.Module):
         )
         self.decoder2 = UnetrUpBlock(
             spatial_dims=spatial_dims,
-            in_channels=feature_size * 2,
+            in_channels=feature_size,
             out_channels=feature_size,
             kernel_size=3,
-            upsample_kernel_size=2,
+            upsample_kernel_size=1,
             norm_name=norm_name,
             res_block=True,
         )
@@ -254,7 +285,7 @@ class SwinUNETR(nn.Module):
             in_channels=feature_size,
             out_channels=feature_size,
             kernel_size=3,
-            upsample_kernel_size=2,
+            upsample_kernel_size=4,
             norm_name=norm_name,
             res_block=True,
         )
@@ -329,16 +360,34 @@ class SwinUNETR(nn.Module):
 
         if not torch.jit.is_scripting():
             self._check_input_size(x_in.shape[2:])
-        hidden_states_out = self.swinViT(x_in, self.normalize)
+        image_output = self.swinViT(x_in)
+        hidden_states_out, image_project = image_output['feature'], image_output['project']
+        # if len(hidden_states_out[0].shape) == 4: 
+        #     hidden_states_out = hidden_states_out[1:]  # 4 8 16 32   convnext: Embedding + 4 layers feature map
+        #     hidden_states_out = [rearrange(item,'b c h w -> b (h w) c') for item in hidden_states_out] 
+        # print(f"hidden state 0 shape : {hidden_states_out[0].shape}")
+        # print(f"hidden state 1 shape : {hidden_states_out[1].shape}")
+        # print(f"hidden state 2 shape : {hidden_states_out[2].shape}")
+        # print(f"hidden state 3 shape : {hidden_states_out[3].shape}")
+        # print(f"hidden state 4 shape : {hidden_states_out[4].shape}")
         enc0 = self.encoder1(x_in)
+        # print(f"shape of enc0 is : {enc0.shape}")
         enc1 = self.encoder2(hidden_states_out[0])
+        # print(f"shape of enc1 is : {enc1.shape}")
         enc2 = self.encoder3(hidden_states_out[1])
+        #print(f"shape of enc2 is : {enc2.shape}")
         enc3 = self.encoder4(hidden_states_out[2])
+        #print(f"shape of enc3 is : {enc3.shape}")
         dec4 = self.encoder10(hidden_states_out[4])
+        #print(f"shape of dec4 is : {dec4.shape}")
         dec3 = self.decoder5(dec4, hidden_states_out[3])
+        #print(f"shape of dec3 is : {dec3.shape}")
         dec2 = self.decoder4(dec3, enc3)
+        #print(f"shape of dec2 is : {dec2.shape}")
         dec1 = self.decoder3(dec2, enc2)
+        #print(f"shape of dec1 is : {dec1.shape}")
         dec0 = self.decoder2(dec1, enc1)
+        #print(f"shape of dec0 is : {dec0.shape}")
         out = self.decoder1(dec0, enc0)
         logits = self.out(out)
         return logits
