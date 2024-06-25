@@ -20,6 +20,7 @@ class LanGuideMedSegWrapper(pl.LightningModule):
         
         # self.model = LanGuideMedSeg(args.bert_type, args.vision_type1, args.project_dim)
         self.model = SwinUNETR(vision_type1 = args.vision_type1,
+                           bert_type =  args.bert_type,
                            project_dim = args.project_dim,
                            in_channels=3,
                            out_channels=9,

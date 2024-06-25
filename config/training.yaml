@@ -13,7 +13,7 @@ TRAIN:
   device: 1
 
   model_save_path: ./save_model
-  model_save_filename: convNext-UnetR
+  model_save_filename: convNext-UnetR-GuideDecoder
 
 MODEL:
   bert_type: microsoft/BiomedVLP-CXR-BERT-specialized

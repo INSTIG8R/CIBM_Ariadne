@@ -16,6 +16,7 @@ from collections.abc import Sequence
 
 import numpy as np
 import torch
+from .layers import GuideDecoder
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
@@ -62,6 +63,33 @@ class VisionModel1(nn.Module):
         project = self.project_head(embeds)
 
         return {"feature":output['hidden_states'], "project":project}
+    
+class BERTModel(nn.Module):
+
+    def __init__(self, bert_type, project_dim):
+
+        super(BERTModel, self).__init__()
+
+        self.model = AutoModel.from_pretrained(bert_type,output_hidden_states=True,trust_remote_code=True)
+        self.project_head = nn.Sequential(             
+            nn.Linear(768, project_dim),
+            nn.LayerNorm(project_dim),             
+            nn.GELU(),             
+            nn.Linear(project_dim, project_dim)
+        )
+        # freeze the parameters
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+    def forward(self, input_ids, attention_mask):
+
+        output = self.model(input_ids=input_ids, attention_mask=attention_mask,output_hidden_states=True,return_dict=True)
+        # get 1+2+last layer
+        last_hidden_states = torch.stack([output['hidden_states'][1], output['hidden_states'][2], output['hidden_states'][-1]]) # n_layer, batch, seqlen, emb_dim
+        embed = last_hidden_states.permute(1,0,2,3).mean(2).mean(1) # pooling
+        embed = self.project_head(embed)
+
+        return {'feature':output['hidden_states'],'project':embed}
 
 class SwinUNETR(nn.Module):
     """
@@ -82,6 +110,7 @@ class SwinUNETR(nn.Module):
     def __init__(
         self,
         vision_type1: str,
+        bert_type: str,
         project_dim: int,
         img_size: Sequence[int] | int,
         in_channels: int,
@@ -161,6 +190,7 @@ class SwinUNETR(nn.Module):
         self.normalize = normalize
 
         self.swinViT = VisionModel1(vision_type1, project_dim)
+        self.text_encoder = BERTModel(bert_type, project_dim)
 
         # self.swinViT = SwinTransformer(
         #     in_chans=in_channels,
@@ -290,6 +320,13 @@ class SwinUNETR(nn.Module):
             res_block=True,
         )
 
+        self.spatial_dim = [7,14,28,56]    # 224*224
+        feature_dim = [768,384,192,96]
+
+        self.decoder384 = GuideDecoder(feature_dim[0],feature_dim[1],self.spatial_dim[0],24)
+        self.decoder192 = GuideDecoder(feature_dim[1],feature_dim[2],self.spatial_dim[1],12)
+        self.decoder96 = GuideDecoder(feature_dim[2],feature_dim[3],self.spatial_dim[2],9)
+
         self.out = UnetOutBlock(spatial_dims=spatial_dims, in_channels=feature_size, out_channels=out_channels)
 
     def load_from(self, weights):
@@ -363,8 +400,12 @@ class SwinUNETR(nn.Module):
         image_output = self.swinViT(x_in)
         hidden_states_out, image_project = image_output['feature'], image_output['project']
         # if len(hidden_states_out[0].shape) == 4: 
-        #     hidden_states_out = hidden_states_out[1:]  # 4 8 16 32   convnext: Embedding + 4 layers feature map
-        #     hidden_states_out = [rearrange(item,'b c h w -> b (h w) c') for item in hidden_states_out] 
+        #     hidden_states_out_converted = hidden_states_out[1:]  # 4 8 16 32   convnext: Embedding + 4 layers feature map
+        #     hidden_states_out_converted = [rearrange(item,'b c h w -> b (h w) c') for item in hidden_states_out] 
+
+        text_output = self.text_encoder(text['input_ids'],text['attention_mask'])
+        text_embeds, text_project = text_output['feature'],text_output['project']
+
         # print(f"hidden state 0 shape : {hidden_states_out[0].shape}")
         # print(f"hidden state 1 shape : {hidden_states_out[1].shape}")
         # print(f"hidden state 2 shape : {hidden_states_out[2].shape}")
@@ -380,13 +421,17 @@ class SwinUNETR(nn.Module):
         #print(f"shape of enc3 is : {enc3.shape}")
         dec4 = self.encoder10(hidden_states_out[4])
         #print(f"shape of dec4 is : {dec4.shape}")
-        dec3 = self.decoder5(dec4, hidden_states_out[3])
+        dec3 = self.decoder384(rearrange(dec4,'b c h w -> b (h w) c'), rearrange(hidden_states_out[3],'b c h w -> b (h w) c'),text_embeds[-1])
         #print(f"shape of dec3 is : {dec3.shape}")
-        dec2 = self.decoder4(dec3, enc3)
+        dec2 = self.decoder192(dec3, rearrange(enc3,'b c h w -> b (h w) c'), text_embeds[-1])
         #print(f"shape of dec2 is : {dec2.shape}")
-        dec1 = self.decoder3(dec2, enc2)
+        dec1 = self.decoder96(dec2, rearrange(enc2,'b c h w -> b (h w) c'), text_embeds[-1])
         #print(f"shape of dec1 is : {dec1.shape}")
-        dec0 = self.decoder2(dec1, enc1)
+        dec1 = dec1.permute(0, 2, 1).contiguous()
+        b = dec1.size(0)
+        c = dec1.size(1)
+        h = w = int(dec1.size(2)**0.5)
+        dec0 = self.decoder2(dec1.view(b, c, h, w), enc1)
         #print(f"shape of dec0 is : {dec0.shape}")
         out = self.decoder1(dec0, enc0)
         logits = self.out(out)
