@@ -1,0 +1,26 @@
+args: !!python/object/new:utils.config.CfgNode
+  dictitems:
+    bert_type: microsoft/BiomedVLP-CXR-BERT-specialized
+    device: 1
+    image_size:
+    - 224
+    - 224
+    lr: 0.0001
+    max_epochs: 200
+    min_epochs: 20
+    model_save_filename: Hybrid-UnetR-GuideDecoder
+    model_save_path: ./save_model
+    patience: 20
+    project_dim: 768
+    test_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test
+      Set/synapse_h5_200.csv
+    test_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test
+      Set
+    train_batch_size: 4
+    train_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train
+      Set/synapse_npz_200.csv
+    train_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train
+      Set
+    valid_batch_size: 4
+    vision_type1: facebook/convnext-tiny-224
+    vision_type2: microsoft/swin-tiny-patch4-window7-224
