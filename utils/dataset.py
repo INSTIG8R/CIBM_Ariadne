@@ -123,6 +123,14 @@ class QaTa(Dataset):
         image = torch.from_numpy(image.astype(np.float32)).unsqueeze(0)
         gt = torch.from_numpy(gt.astype(np.int32)).unsqueeze(0)
 
+        image = torch.randn((1, 224, 224, 224), dtype=torch.float32)
+        # Set the shape
+        shape = (1, 224, 224, 224)
+
+        # Create a random tensor of integers with values between 0 and 10 (inclusive)
+        # Adjust the range as needed
+        gt = torch.randint(0, 10, shape, dtype=torch.int)
+
         return ([image, text], gt)
 
     # def transform(self,image_size=[224,224]):

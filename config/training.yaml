@@ -4,7 +4,7 @@ TRAIN:
 
   valid_batch_size: 4
 
-  image_size: [224,224]
+  image_size: [224,224,224]
 
   min_epochs: 20
   max_epochs: 200

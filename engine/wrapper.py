@@ -1,5 +1,6 @@
 from utils.model import LanGuideMedSeg
-from utils.swin_unetr import SwinUNETR
+# from utils.swin_unetr import SwinUNETR
+from utils.swin_unetr3d import SwinUNETR
 from monai.losses import DiceCELoss
 from torchmetrics import Accuracy,Dice
 from torchmetrics.classification import BinaryJaccardIndex
@@ -19,16 +20,21 @@ class LanGuideMedSegWrapper(pl.LightningModule):
         super(LanGuideMedSegWrapper, self).__init__()
         
         # self.model = LanGuideMedSeg(args.bert_type, args.vision_type1, args.project_dim)
-        self.model = SwinUNETR(vision_type1 = args.vision_type1,
-                           vision_type2 = args.vision_type2,
-                           bert_type =  args.bert_type,
-                           project_dim = args.project_dim,
-                           in_channels=3,
-                           out_channels=9,
-                           img_size=args.image_size,
-                           feature_size=96,
-                           norm_name='batch',
-                           spatial_dims=2)  #using swin-unetr model
+        # self.model = SwinUNETR(vision_type1 = args.vision_type1,
+        #                    vision_type2 = args.vision_type2,
+        #                    bert_type =  args.bert_type,
+        #                    project_dim = args.project_dim,
+        #                    in_channels=3,
+        #                    out_channels=9,
+        #                    img_size=args.image_size,
+        #                    feature_size=96,
+        #                    norm_name='batch',
+        #                    spatial_dims=2)  #using swin-unetr model
+        self.model = SwinUNETR(
+            img_size = args.image_size,
+            in_channels = 3,
+            out_channels = 9,
+        )
         self.lr = args.lr
         self.history = {}
         
