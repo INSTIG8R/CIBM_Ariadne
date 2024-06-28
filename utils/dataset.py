@@ -6,9 +6,6 @@ from monai.transforms import (Compose, Lambdad, NormalizeIntensityd,RandCoarseSh
                               Resized, ToTensord, LoadImaged, EnsureChannelFirstd)
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer
-import numpy as np
-import cv2
-from scipy.ndimage.interpolation import zoom
 
 def clean_lists(file_list, other_list, folder_path):
   """
@@ -25,10 +22,6 @@ class QaTa(Dataset):
 
         super(QaTa, self).__init__()
 
-        # self.sample_list = open('/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set/train.txt').readlines()
-
-        self.output_size = image_size
-
         self.mode = mode
 
         with open(csv_path, 'r') as f:
@@ -36,9 +29,9 @@ class QaTa(Dataset):
         image_list = list(self.data['Image'])
         caption_list = list(self.data['Description'])
 
-        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set/train_npz'
+        folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Train Set/Images'
 
-        # folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test Set/synapse_npz_from_h5' #For test
+        # folder_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Test Set/Images'  #For test
 
         self.image_list, self.caption_list = clean_lists(image_list, caption_list, folder_path)
 
@@ -64,91 +57,53 @@ class QaTa(Dataset):
 
     def __getitem__(self, idx):
 
-        # slice_name = self.sample_list[idx].strip('\n')
-        # data_path = '/home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set/train_npz/'+slice_name+'.npz'
-        # data = np.load(data_path)
-        # image, label = data['image'], data['label']
-
-        # trans = self.transform(self.image_size)
+        trans = self.transform(self.image_size)
 
         image_list = self.image_list
-        # data_path = os.path.join(self.root_path, image_list[idx])
-
-        npz_file = os.path.join(self.root_path,'train_npz',image_list[idx])
-        npz_data = np.load(npz_file)
         
-        image = npz_data['image']
-        gt = npz_data['label']
-
-        unique_values = np.unique(gt)
-        num_classes = len(unique_values)
-
+        image = os.path.join(self.root_path,'Images',image_list[idx])
+        gt = os.path.join(self.root_path,'Ground-truths', image_list[idx])
         caption = self.caption_list[idx]
 
-        
-
         token_output = self.tokenizer.encode_plus(caption, padding='max_length',
-                                                        max_length=100, 
+                                                        max_length=50, 
                                                         truncation=True,
                                                         return_attention_mask=True,
                                                         return_tensors='pt')
         token,mask = token_output['input_ids'],token_output['attention_mask']
 
-        data = {'token':token, 'mask':mask}
-        # data = trans(data)
+        data = {'image':image, 'gt':gt, 'token':token, 'mask':mask}
+        data = trans(data)
 
-        # image_np = cv2.imread(gt)
-        # self.image_np.append(image_np)
-        # flat_data = np.concatenate(self.image_np)
-        # unique_elements = np.unique(flat_data)
-
-        # image_np_unique = np.unique(image_np)
-
-        token,mask = data['token'],data['mask']
-        # gt = torch.where(gt==255,1,0)
-        text = {'input_ids':token.squeeze(dim=0), 'attention_mask':mask.squeeze(dim=0)}
-
-        x, y = image.shape
-        if x != self.output_size[0] or y != self.output_size[1]:
-            image = zoom(image, (self.output_size[0] / x, self.output_size[1] / y), order=3)  # why not 3?
-            gt = zoom(gt, (self.output_size[0] / x, self.output_size[1] / y), order=0)
-
-        # gt_reshaped = np.zeros((9, gt.shape[0], gt.shape[1]), dtype=gt.dtype)
-
-        # for i in range(8):
-        #     gt_reshaped[i] = (gt == i).astype(gt.dtype)
-
-        # gt = torch.from_numpy(gt_reshaped.astype(np.int32))
-
-        image = torch.from_numpy(image.astype(np.float32)).unsqueeze(0)
-        gt = torch.from_numpy(gt.astype(np.int32)).unsqueeze(0)
+        image,gt,token,mask = data['image'],data['gt'],data['token'],data['mask']
+        gt = torch.where(gt==255,1,0)
+        text = {'input_ids':token.squeeze(dim=0), 'attention_mask':mask.squeeze(dim=0)} 
 
         return ([image, text], gt)
 
-    # def transform(self,image_size=[224,224]):
+    def transform(self,image_size=[224,224]):
 
-    #     if self.mode == 'train':  # for training mode
-    #         trans = Compose([
-    #             LoadImaged(["image","gt"], reader='PILReader'),
-    #             EnsureChannelFirstd(["image","gt"]),
-    #             RandZoomd(['image','gt'],min_zoom=0.95,max_zoom=1.2,mode=["bicubic","nearest"],prob=0.1),
-    #             Resized(["image"],spatial_size=image_size,mode='bicubic'),
-    #             Resized(["gt"],spatial_size=image_size,mode='nearest'),
-    #             NormalizeIntensityd(['image'], channel_wise=True),
-    #             ToTensord(["image","gt","token","mask"]),
-    #         ])
+        if self.mode == 'train':  # for training mode
+            trans = Compose([
+                LoadImaged(["image","gt"], reader='PILReader'),
+                EnsureChannelFirstd(["image","gt"]),
+                RandZoomd(['image','gt'],min_zoom=0.95,max_zoom=1.2,mode=["bicubic","nearest"],prob=0.1),
+                Resized(["image"],spatial_size=image_size,mode='bicubic'),
+                Resized(["gt"],spatial_size=image_size,mode='nearest'),
+                NormalizeIntensityd(['image'], channel_wise=True),
+                ToTensord(["image","gt","token","mask"]),
+            ])
         
-    #     else:  # for valid and test mode: remove random zoom
-    #         trans = Compose([
-    #             LoadImaged(["image","gt"], reader='PILReader'),
-    #             EnsureChannelFirstd(["image","gt"]),
-    #             Resized(["image"],spatial_size=image_size,mode='bicubic'),
-    #             Resized(["gt"],spatial_size=image_size,mode='nearest'),
-    #             NormalizeIntensityd(['image'], channel_wise=True),
-    #             ToTensord(["image","gt","token","mask"]),
+        else:  # for valid and test mode: remove random zoom
+            trans = Compose([
+                LoadImaged(["image","gt"], reader='PILReader'),
+                EnsureChannelFirstd(["image","gt"]),
+                Resized(["image"],spatial_size=image_size,mode='bicubic'),
+                Resized(["gt"],spatial_size=image_size,mode='nearest'),
+                NormalizeIntensityd(['image'], channel_wise=True),
+                ToTensord(["image","gt","token","mask"]),
 
-    #         ])
+            ])
 
-    #     return trans
-
+        return trans
 

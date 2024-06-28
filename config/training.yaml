@@ -22,8 +22,8 @@ MODEL:
   project_dim: 768
 
 DATA:
-  train_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set/synapse_npz_200.csv
-  train_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Train Set
+  train_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Train Set/Train_text_MosMedData+ 1.csv
+  train_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Train Set
 
-  test_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test Set/synapse_h5_200.csv
-  test_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/Synapse/Ariadne/Test Set
+  test_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Train Set/Train_text_MosMedData+ 1.csv
+  test_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Test Set
