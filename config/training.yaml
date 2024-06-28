@@ -25,5 +25,5 @@ DATA:
   train_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Train Set/Train_text_MosMedData+ 1.csv
   train_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Train Set
 
-  test_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Train Set/Train_text_MosMedData+ 1.csv
+  test_csv_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Test Set/Test_text_MosMedData+.csv
   test_root_path: /home/sakir-w4-linux/Development/Thesis/CIBM/Datasets/MosMedData+/Ariadne/Test Set
